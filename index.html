@@ -1,287 +1,35 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DEV WITE | Change Pass Tool</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DEV WITE – Tools</title>
 <style>
-:root{
-  --bg:#0b0f14;
-  --card:#141922;
-  --primary:#2563eb;
-  --secondary:#1f2937;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --success:#22c55e;
-}
-
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,system-ui,Arial;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.app{
-  width:100%;
-  max-width:430px;
-  background:var(--card);
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:0 0 40px rgba(0,0,0,.7);
-}
-
-.header{
-  padding:16px;
-  text-align:center;
-  border-bottom:1px solid #1f2937;
-}
-
-.logo{
-  font-size:22px;
-  font-weight:900;
-  color:var(--primary);
-}
-
-.sub{
-  font-size:13px;
-  color:var(--muted);
-}
-
-.tabs{
-  display:flex;
-  background:#0f141c;
-}
-
-.tab-btn{
-  flex:1;
-  padding:12px;
-  background:none;
-  border:none;
-  color:var(--muted);
-  font-weight:700;
-}
-
-.tab-btn.active{
-  color:var(--primary);
-  border-bottom:3px solid var(--primary);
-}
-
-.content{padding:18px}
-.tab{display:none}
-.tab.active{display:block}
-
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:10px;
-  border:none;
-  outline:none;
-  font-size:15px;
-}
-
-input{
-  background:#0b0f14;
-  color:var(--text);
-}
-
-button{
-  background:var(--primary);
-  color:white;
-  font-weight:700;
-}
-
-.green{background:var(--success)}
-.gray{background:var(--secondary)}
-
-.links{margin-top:12px}
-.link-row{
-  display:flex;
-  gap:8px;
-  margin-top:8px;
-}
-
-.mail-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.mail-btn{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px;
-  background:var(--secondary);
-  border-radius:12px;
-  font-weight:700;
-}
-
-.mail-btn img{
-  width:22px;
-  height:22px;
-}
-
-.note{
-  margin-top:14px;
-  font-size:13px;
-  color:var(--muted);
-  text-align:center;
-}
-
-.footer{
-  padding:12px;
-  text-align:center;
-  font-size:14px;
-  border-top:1px solid #1f2937;
-}
-
-.footer a{
-  color:var(--primary);
-  text-decoration:none;
-  font-weight:700;
-}
-
-.toast{
-  position:fixed;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:#020617;
-  color:var(--success);
-  padding:10px 14px;
-  border-radius:10px;
-  display:none;
-}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont}
+body{margin:0;background:linear-gradient(180deg,#05070c,#0a0f1c);color:#e5e7eb}
+.wrap{max-width:420px;margin:60px auto;padding:16px}
+.card{background:#0b1220;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+h1{margin:0 0 6px;text-align:center;color:#3b82f6}
+.sub{text-align:center;color:#9ca3af;font-size:13px;margin-bottom:18px}
+.btn{width:100%;padding:16px;border-radius:14px;border:none;font-size:16px;font-weight:700;margin-top:12px;cursor:pointer}
+.blue{background:#2563eb;color:#fff}
+.green{background:#22c55e;color:#04110a}
 </style>
 </head>
-
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>DEV WITE</h1>
+      <div class="sub">Chọn công cụ</div>
 
-<div class="app">
-  <div class="header">
-    <div class="logo">DEV WITE</div>
-    <div class="sub">Change Pass Tool</div>
-  </div>
+      <button class="btn blue" onclick="location.href='/changepass'">
+        🔁 Change Pass
+      </button>
 
-  <div class="tabs">
-    <button class="tab-btn active" onclick="openTab(0)">Change Pass</button>
-    <button class="tab-btn" onclick="openTab(1)">Web Mail</button>
-  </div>
-
-  <div class="content">
-
-    <!-- TAB 1 -->
-    <div class="tab active">
-      <input id="uid" placeholder="UID">
-      <input id="code" placeholder="CODE MAIL">
-
-      <button onclick="pasteCode()" class="green">Dán CODE từ clipboard</button>
-      <button onclick="genLinks()">Tạo link</button>
-
-      <div class="links" id="links"></div>
-
-      <div class="note">
-        Nhập UID + CODE → chọn Ver1 / Ver2 / Ver3
-      </div>
+      <button class="btn green" onclick="location.href='/2fa'">
+        🔐 Get 2FA (TOTP)
+      </button>
     </div>
-
-    <!-- TAB 2 -->
-    <div class="tab">
-      <div class="mail-grid">
-        <div class="mail-btn" onclick="openMail('https://mail.google.com')">
-          <img src="https://www.google.com/favicon.ico"> Gmail
-        </div>
-        <div class="mail-btn" onclick="openMail('https://outlook.live.com')">
-          <img src="https://outlook.live.com/favicon.ico"> Outlook
-        </div>
-        <div class="mail-btn" onclick="openMail('https://yopmail.com')">
-          <img src="https://yopmail.com/favicon.ico"> YOPmail
-        </div>
-        <div class="mail-btn" onclick="openMail('https://mailngon.top')">
-          <img src="https://mailngon.top/favicon.ico"> Mailngon
-        </div>
-      </div>
-    </div>
-
   </div>
-
-  <div class="footer">
-    Hỗ trợ: <a href="https://t.me/wite_dev" target="_blank">@wite_dev</a>
-  </div>
-</div>
-
-<div class="toast" id="toast">Đã copy link</div>
-
-<script>
-const uidInput = document.getElementById("uid");
-const codeInput = document.getElementById("code");
-const linksBox = document.getElementById("links");
-const toast = document.getElementById("toast");
-
-/* Load saved */
-uidInput.value = localStorage.getItem("uid") || "";
-codeInput.value = localStorage.getItem("code") || "";
-
-/* Tabs */
-function openTab(i){
-  document.querySelectorAll(".tab").forEach((t,idx)=>t.classList.toggle("active",idx===i));
-  document.querySelectorAll(".tab-btn").forEach((b,idx)=>b.classList.toggle("active",idx===i));
-}
-
-/* Paste */
-async function pasteCode(){
-  try{
-    const t = await navigator.clipboard.readText();
-    codeInput.value = t.trim();
-    localStorage.setItem("code",t.trim());
-  }catch{
-    alert("Không đọc được clipboard");
-  }
-}
-
-/* Generate links */
-function genLinks(){
-  const uid = uidInput.value.trim();
-  const code = codeInput.value.trim();
-  if(!uid || !code){alert("Nhập UID và CODE");return;}
-
-  localStorage.setItem("uid",uid);
-  localStorage.setItem("code",code);
-
-  const base = `https://www.facebook.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}`;
-
-  const arr = [
-    {n:"Ver1",u:base+"&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email"},
-    {n:"Ver2",u:base+"&fl=in_autosend_experiment&sih=0&ssb=1&msgr=0&rm=send_email"},
-    {n:"Ver3",u:base+"&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email&_rdc=1&_rdr#"}
-  ];
-
-  linksBox.innerHTML = arr.map(l=>`
-    <div class="link-row">
-      <button class="gray" onclick="window.open('${l.u}','_blank')">${l.n}</button>
-      <button class="gray" onclick="copyLink('${l.u}')">Copy</button>
-    </div>
-  `).join("");
-}
-
-/* Copy */
-function copyLink(t){
-  navigator.clipboard.writeText(t);
-  toast.style.display="block";
-  setTimeout(()=>toast.style.display="none",1500);
-}
-
-/* Mail */
-function openMail(u){window.open(u,"_blank")}
-</script>
-
 </body>
 </html>
