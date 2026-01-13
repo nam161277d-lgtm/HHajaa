@@ -1,181 +1,77 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DEV WITE | 2FA TOTP</title>
-
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Get 2FA</title>
 <style>
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,system-ui;
-  background:#0b0f14;
-  color:#e5e7eb;
-}
-.container{
-  max-width:420px;
-  margin:40px auto;
-  padding:20px;
-}
-.card{
-  background:#111827;
-  border-radius:18px;
-  padding:22px;
-  box-shadow:0 0 30px rgba(0,0,0,.6);
-}
-h1{
-  text-align:center;
-  color:#3b82f6;
-  margin:0;
-}
-.sub{
-  text-align:center;
-  opacity:.7;
-  margin-bottom:16px;
-}
-input{
-  width:100%;
-  padding:14px;
-  margin:10px 0;
-  border:none;
-  border-radius:12px;
-  background:#020617;
-  color:white;
-  font-size:16px;
-}
-button{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  font-size:16px;
-  margin-top:10px;
-  cursor:pointer;
-  background:#2563eb;
-  color:white;
-}
-.code{
-  text-align:center;
-  font-size:40px;
-  letter-spacing:6px;
-  margin:18px 0;
-  color:#22c55e;
-}
-.timer{
-  text-align:center;
-  font-size:14px;
-  opacity:.7;
-}
-.row{
-  display:flex;
-  gap:10px;
-}
-.row button{
-  flex:1;
-}
-.gray{background:#1f2937}
-.note{
-  margin-top:14px;
-  font-size:13px;
-  opacity:.7;
-  text-align:center;
-}
-a{color:#60a5fa;text-decoration:none}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont}
+body{margin:0;background:linear-gradient(180deg,#05070c,#0a0f1c);color:#e5e7eb}
+.wrap{max-width:420px;margin:40px auto;padding:16px}
+.card{background:#0b1220;border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+h1{margin:0 0 6px;text-align:center;color:#3b82f6}
+.sub{text-align:center;color:#9ca3af;font-size:13px;margin-bottom:16px}
+input{width:100%;padding:14px;border-radius:12px;border:none;background:#020617;color:#e5e7eb}
+.btn{width:100%;padding:14px;border-radius:14px;border:none;font-weight:700;margin-top:10px;cursor:pointer}
+.green{background:#22c55e;color:#04110a}
+.gray{background:#1f2937;color:#e5e7eb}
+.code{background:#020617;border-radius:12px;padding:14px;margin-top:12px;
+  font-size:28px;letter-spacing:4px;text-align:center;color:#00ff9c}
+.hint{text-align:center;color:#9ca3af;font-size:12px;margin-top:6px}
 </style>
 </head>
-
 <body>
-<div class="container">
-  <div class="card">
-    <h1>DEV WITE</h1>
-    <div class="sub">TOTP 2FA Generator</div>
+  <div class="wrap">
+    <div class="card">
+      <h1>Get 2FA</h1>
+      <div class="sub">Sinh mã TOTP (client-side)</div>
 
-    <input id="secret" placeholder="Nhập 2FA Secret (Base32)">
+      <input id="secret" placeholder="2FA Secret (Base32)" />
 
-    <div class="code" id="code">------</div>
-    <div class="timer" id="timer">--s</div>
+      <button class="btn green" onclick="gen()">⚡ GET MÃ</button>
+      <div id="code" class="code">------</div>
+      <div id="timer" class="hint">—</div>
 
-    <div class="row">
-      <button onclick="copyCode()">Copy</button>
-      <button class="gray" onclick="gen()">Refresh</button>
-    </div>
-
-    <div class="note">
-      Mã sinh hoàn toàn trên trình duyệt<br>
-      Không gửi dữ liệu đi đâu
-    </div>
-
-    <div class="note" style="margin-top:10px">
-      ← <a href="/">Quay lại Change Pass</a>
+      <button class="btn gray" onclick="copy()">📋 Copy mã</button>
+      <button class="btn gray" onclick="location.href='/'">⬅ Trang chủ</button>
     </div>
   </div>
-</div>
 
 <script>
-// ===== Base32 decode =====
-function base32ToBytes(base32){
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-  let bits = "";
-  let bytes = [];
-  base32 = base32.replace(/=+$/,"").toUpperCase();
-
-  for(let c of base32){
-    const val = alphabet.indexOf(c);
-    if(val === -1) continue;
-    bits += val.toString(2).padStart(5,"0");
-  }
-  for(let i=0;i+8<=bits.length;i+=8){
-    bytes.push(parseInt(bits.substring(i,i+8),2));
-  }
-  return new Uint8Array(bytes);
+const base32Chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function b32toBytes(s){
+  s=s.replace(/=+$/,'').toUpperCase();
+  let bits='',out=[];
+  for(const c of s){const v=base32Chars.indexOf(c);if(v>-1)bits+=v.toString(2).padStart(5,'0')}
+  for(let i=0;i+8<=bits.length;i+=8)out.push(parseInt(bits.slice(i,i+8),2));
+  return new Uint8Array(out);
 }
-
-// ===== HOTP/TOTP =====
 async function totp(secret){
-  const key = base32ToBytes(secret);
-  const epoch = Math.floor(Date.now()/1000);
-  const counter = Math.floor(epoch/30);
-
-  const buf = new ArrayBuffer(8);
-  const view = new DataView(buf);
-  view.setUint32(4,counter);
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw", key, {name:"HMAC", hash:"SHA-1"}, false, ["sign"]
-  );
-
-  const hmac = new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, buf));
-  const offset = hmac[hmac.length-1] & 0xf;
-  const code = (
-    ((hmac[offset] & 0x7f) << 24) |
-    ((hmac[offset+1] & 0xff) << 16) |
-    ((hmac[offset+2] & 0xff) << 8) |
-    (hmac[offset+3] & 0xff)
-  ) % 1000000;
-
-  return code.toString().padStart(6,"0");
+  const key=b32toBytes(secret);
+  const t=Math.floor(Date.now()/1000/30);
+  const buf=new ArrayBuffer(8); new DataView(buf).setUint32(4,t);
+  const k=await crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const h=new Uint8Array(await crypto.subtle.sign('HMAC',k,buf));
+  const o=h[h.length-1]&0xf;
+  const c=((h[o]&0x7f)<<24)|(h[o+1]<<16)|(h[o+2]<<8)|h[o+3];
+  return (c%1e6).toString().padStart(6,'0');
 }
-
+let iv=null;
 async function gen(){
-  const s = document.getElementById("secret").value.trim();
-  if(!s) return;
-  const c = await totp(s);
-  document.getElementById("code").innerText = c;
+  const s=document.getElementById('secret').value.trim();
+  if(!s){alert('Nhập secret');return;}
+  clearInterval(iv);
+  const upd=async()=>{
+    document.getElementById('code').innerText=await totp(s);
+    document.getElementById('timer').innerText='⏳ '+(30-(Math.floor(Date.now()/1000)%30))+'s';
+  };
+  await upd(); iv=setInterval(upd,1000);
 }
-
-function copyCode(){
-  const c = document.getElementById("code").innerText;
-  if(c.includes("-")) return;
-  navigator.clipboard.writeText(c);
+function copy(){
+  const c=document.getElementById('code').innerText;
+  if(c==='------')return;
+  navigator.clipboard.writeText(c); alert('Đã copy');
 }
-
-// auto refresh timer
-setInterval(async ()=>{
-  const now = Math.floor(Date.now()/1000);
-  const remain = 30 - (now % 30);
-  document.getElementById("timer").innerText = remain + "s";
-  if(remain === 30) gen();
-},1000);
 </script>
 </body>
 </html>
