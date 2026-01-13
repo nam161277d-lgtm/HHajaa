@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEV WITE | 2FA TOTP</title>
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,system-ui;
+  background:#0b0f14;
+  color:#e5e7eb;
+}
+.container{
+  max-width:420px;
+  margin:40px auto;
+  padding:20px;
+}
+.card{
+  background:#111827;
+  border-radius:18px;
+  padding:22px;
+  box-shadow:0 0 30px rgba(0,0,0,.6);
+}
+h1{
+  text-align:center;
+  color:#3b82f6;
+  margin:0;
+}
+.sub{
+  text-align:center;
+  opacity:.7;
+  margin-bottom:16px;
+}
+input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border:none;
+  border-radius:12px;
+  background:#020617;
+  color:white;
+  font-size:16px;
+}
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  font-size:16px;
+  margin-top:10px;
+  cursor:pointer;
+  background:#2563eb;
+  color:white;
+}
+.code{
+  text-align:center;
+  font-size:40px;
+  letter-spacing:6px;
+  margin:18px 0;
+  color:#22c55e;
+}
+.timer{
+  text-align:center;
+  font-size:14px;
+  opacity:.7;
+}
+.row{
+  display:flex;
+  gap:10px;
+}
+.row button{
+  flex:1;
+}
+.gray{background:#1f2937}
+.note{
+  margin-top:14px;
+  font-size:13px;
+  opacity:.7;
+  text-align:center;
+}
+a{color:#60a5fa;text-decoration:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="card">
+    <h1>DEV WITE</h1>
+    <div class="sub">TOTP 2FA Generator</div>
+
+    <input id="secret" placeholder="Nhập 2FA Secret (Base32)">
+
+    <div class="code" id="code">------</div>
+    <div class="timer" id="timer">--s</div>
+
+    <div class="row">
+      <button onclick="copyCode()">Copy</button>
+      <button class="gray" onclick="gen()">Refresh</button>
+    </div>
+
+    <div class="note">
+      Mã sinh hoàn toàn trên trình duyệt<br>
+      Không gửi dữ liệu đi đâu
+    </div>
+
+    <div class="note" style="margin-top:10px">
+      ← <a href="/">Quay lại Change Pass</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== Base32 decode =====
+function base32ToBytes(base32){
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  let bytes = [];
+  base32 = base32.replace(/=+$/,"").toUpperCase();
+
+  for(let c of base32){
+    const val = alphabet.indexOf(c);
+    if(val === -1) continue;
+    bits += val.toString(2).padStart(5,"0");
+  }
+  for(let i=0;i+8<=bits.length;i+=8){
+    bytes.push(parseInt(bits.substring(i,i+8),2));
+  }
+  return new Uint8Array(bytes);
+}
+
+// ===== HOTP/TOTP =====
+async function totp(secret){
+  const key = base32ToBytes(secret);
+  const epoch = Math.floor(Date.now()/1000);
+  const counter = Math.floor(epoch/30);
+
+  const buf = new ArrayBuffer(8);
+  const view = new DataView(buf);
+  view.setUint32(4,counter);
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw", key, {name:"HMAC", hash:"SHA-1"}, false, ["sign"]
+  );
+
+  const hmac = new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, buf));
+  const offset = hmac[hmac.length-1] & 0xf;
+  const code = (
+    ((hmac[offset] & 0x7f) << 24) |
+    ((hmac[offset+1] & 0xff) << 16) |
+    ((hmac[offset+2] & 0xff) << 8) |
+    (hmac[offset+3] & 0xff)
+  ) % 1000000;
+
+  return code.toString().padStart(6,"0");
+}
+
+async function gen(){
+  const s = document.getElementById("secret").value.trim();
+  if(!s) return;
+  const c = await totp(s);
+  document.getElementById("code").innerText = c;
+}
+
+function copyCode(){
+  const c = document.getElementById("code").innerText;
+  if(c.includes("-")) return;
+  navigator.clipboard.writeText(c);
+}
+
+// auto refresh timer
+setInterval(async ()=>{
+  const now = Math.floor(Date.now()/1000);
+  const remain = 30 - (now % 30);
+  document.getElementById("timer").innerText = remain + "s";
+  if(remain === 30) gen();
+},1000);
+</script>
+</body>
+</html>
