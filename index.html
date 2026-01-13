@@ -111,9 +111,9 @@ function gen(){
   const uid=document.getElementById('uid').value.trim();
   const code=document.getElementById('code').value.trim();
   if(!uid||!code){alert('Nhập UID & CODE');return;}
-  links[1]=`https://www.site.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email`;
-  links[2]=`https://www.site.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=in_autosend_experiment&sih=0&ssb=1&msgr=0&rm=send_email`;
-  links[3]=`https://www.site.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email&_rdc=1&_rdr#`;
+  links[1]=`https://www.facebook.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email`;
+  links[2]=`https://www.facebook.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=in_autosend_experiment&sih=0&ssb=1&msgr=0&rm=send_email`;
+  links[3]=`https://www.facebook.com/recover/password/?u=${encodeURIComponent(uid)}&n=${encodeURIComponent(code)}&fl=default_recover&sih=0&ssb=1&msgr=0&rm=send_email&_rdc=1&_rdr#`;
   updateQR();
 }
 function selectVer(v){
