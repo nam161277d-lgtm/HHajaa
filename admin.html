@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEV WITE • ADMIN</title>
+
+<style>
+:root{
+  --bg:#0b0f19;
+  --card:#121826;
+  --border:#1f2937;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --primary:#3b82f6;
+  --danger:#ef4444;
+  --success:#22c55e;
+}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  justify-content:center
+}
+.container{
+  width:100%;
+  max-width:460px;
+  padding:16px
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  margin-top:16px
+}
+h2,h3{margin:6px 0}
+input,button{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#0f172a;
+  color:var(--text);
+  font-size:15px;
+  margin-top:10px
+}
+button{
+  cursor:pointer;
+  font-weight:600
+}
+.btn-primary{background:var(--primary);border:none}
+.btn-danger{background:var(--danger);border:none}
+.btn-success{background:var(--success);border:none;color:#04110a}
+.small{font-size:12px;color:var(--muted)}
+.list{
+  margin-top:10px;
+  font-size:14px
+}
+.list div{
+  padding:8px 0;
+  border-bottom:1px solid var(--border)
+}
+.flex{
+  display:flex;
+  gap:8px
+}
+.flex button{flex:1}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="loginBox" class="card">
+  <h2>👑 Admin Login</h2>
+
+  <input id="adminUser" placeholder="Admin username">
+  <input id="adminPass" type="password" placeholder="Admin password">
+
+  <button class="btn-primary" onclick="adminLogin()">Đăng nhập</button>
+  <div id="loginMsg" class="small"></div>
+</div>
+
+<!-- PANEL -->
+<div id="panel" class="card" style="display:none">
+
+  <h3>📋 Danh sách user</h3>
+  <div id="userList" class="list"></div>
+
+  <hr style="border:1px solid #1f2937;margin:14px 0">
+
+  <h3>📅 Cấp / gia hạn ngày</h3>
+  <input id="grantPhone" placeholder="SĐT user">
+  <input id="grantDays" placeholder="Số ngày (vd: 7)">
+  <button class="btn-success" onclick="grant()">Cấp ngày</button>
+
+  <hr style="border:1px solid #1f2937;margin:14px 0">
+
+  <h3>🔐 Reset mật khẩu user</h3>
+  <input id="resetPhone" placeholder="SĐT user">
+  <input id="resetPass" placeholder="Mật khẩu mới">
+  <button class="btn-danger" onclick="resetPassword()">Reset mật khẩu</button>
+
+  <hr style="border:1px solid #1f2937;margin:14px 0">
+
+  <h3>🔑 2FA của user</h3>
+  <div id="faList" class="list"></div>
+
+</div>
+</div>
+
+<script>
+/* ===== CONFIG ADMIN ===== */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "nam16127@";
+
+/* ===== STORAGE ===== */
+const ACC_KEY = "DEVWITE_ACCOUNTS";
+
+/* ===== HELPERS ===== */
+function getAcc(){
+  return JSON.parse(localStorage.getItem(ACC_KEY)||"{}");
+}
+function saveAcc(a){
+  localStorage.setItem(ACC_KEY,JSON.stringify(a));
+}
+async function hash(t){
+  const b=await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(t)
+  );
+  return [...new Uint8Array(b)]
+    .map(x=>x.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+/* ===== ADMIN LOGIN ===== */
+function adminLogin(){
+  if(adminUser.value===ADMIN_USER && adminPass.value===ADMIN_PASS){
+    loginBox.style.display="none";
+    panel.style.display="block";
+    renderUsers();
+    renderAll2FA();
+  }else{
+    loginMsg.innerText="Sai thông tin admin";
+  }
+}
+
+/* ===== RENDER USERS ===== */
+function renderUsers(){
+  const acc=getAcc();
+  userList.innerHTML="";
+  Object.keys(acc).forEach(p=>{
+    const exp=acc[p].expire||"Chưa gia hạn";
+    userList.innerHTML+=`
+      <div>
+        <b>${p}</b><br>
+        <span class="small">Hết hạn: ${exp}</span>
+      </div>`;
+  });
+}
+
+/* ===== GRANT DAYS ===== */
+function grant(){
+  const acc=getAcc();
+  if(!acc[grantPhone.value]){
+    alert("User không tồn tại");
+    return;
+  }
+  const d=new Date();
+  d.setDate(d.getDate()+parseInt(grantDays.value));
+  acc[grantPhone.value].expire=d.toISOString().slice(0,10);
+  saveAcc(acc);
+  renderUsers();
+  alert("Đã cấp ngày");
+}
+
+/* ===== RESET PASSWORD ===== */
+async function resetPassword(){
+  const acc=getAcc();
+  if(!acc[resetPhone.value]){
+    alert("User không tồn tại");
+    return;
+  }
+  acc[resetPhone.value].pass=await hash(resetPass.value);
+  saveAcc(acc);
+  alert("Đã reset mật khẩu");
+}
+
+/* ===== ADMIN VIEW ALL 2FA ===== */
+function renderAll2FA(){
+  const acc=getAcc();
+  faList.innerHTML="";
+  Object.keys(acc).forEach(p=>{
+    if(acc[p].twofa && acc[p].twofa.length){
+      faList.innerHTML+=`
+        <div>
+          <b>${p}</b>
+          ${acc[p].twofa.map(x=>`
+            <div class="small">• ${x.name}</div>
+          `).join("")}
+        </div>`;
+    }
+  });
+}
+</script>
+
+</body>
+</html>
